@@ -1,0 +1,28 @@
+stage="create overlay volume $share"
+
+#day=0 this is break loop
+#. $eachDay
+
+if [ ! -d $persistentDir$share ]; then
+  mkdir $persistentDir$share
+fi
+
+if [ -b $lvmVol ]; then
+  echo "Overlay volume '"$overlayVolumeName"' already exists"
+else
+  echo $stage
+  lvcreate "/dev/$vg" "--name=$overlayVolumeName"\
+  "--size=$dayLimit" --verbose --zero y --wipesignatures y
+  chkEx || return $?
+  
+  stage="create ext4 fs"
+  echo $stage
+  mkfs.ext4 $lvmVol -L "$overlayVolumeLabel"
+  chkEx || return $?
+fi
+
+#echo "Try mount $mntPath"
+. $tryRemount
+mkdir -p $mntPath"/workdir"
+mkdir -p $mntPath"/overlay"
+mkdir -p $mntPath"/ready"

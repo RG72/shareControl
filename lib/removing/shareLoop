@@ -1,0 +1,2 @@
+ls $sharesDir"/" | while read share; do
+  echo $stage" "$share

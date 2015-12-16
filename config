@@ -1,0 +1,36 @@
+baseDir="/shareControl/"
+overlayDir="/overlay/"
+persistentDir="/persistent/"
+readyLinkDir="/c/"
+defaultVg="onkoNas"
+mountOptions="noatime,nodiratime,acl,user_xattr"
+overlayOptions="noatime,nodiratime"
+sharesDir=$baseDir"shares"
+
+maxday=40
+maxdayRotate=400
+#snapshotDateTime=`date +%Y%m%d_%H%M`
+#snapshotDateTimeForMove=`date -d '1 hour ago' "+%Y%m%d_%H%M"`
+
+eachShare=$baseDir"lib/eachShare"
+eachDay=$baseDir"lib/eachDay"
+createSnap=$baseDir"lib/createSnap"
+createLv=$baseDir"lib/createLv"
+tryRemount=$baseDir"lib/tryMount"
+tryMountOverlay=$baseDir"lib/tryMountOverlay"
+#tryMountOverlay=$baseDir"lib/tryMountOverlayAufs"
+tryUmountOverlay=$baseDir"lib/tryUmountOverlay"
+#tryUmountOverlay=$baseDir"lib/tryUmountOverlayAufs"
+. $baseDir"lib/checkExitCode"
+. $baseDir"lib/parseOptions"
+shares=`ls $sharesDir"/"`
+
+echo "logFile=$logFile"
+echo "onlySnapshot=$onlySnap"
+echo "snapTo:$snapTo"
+echo "preparedAt:$preparedAt"
+echo ""
+
+if [ ! -z $logFile ]; then
+  logTo $logFile
+fi

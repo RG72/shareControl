@@ -1,0 +1,21 @@
+remountOpt=""
+if grep -qs "$mntPath/ready" /proc/mounts; then
+  #remountOpt="remount,"
+  stage="umount.aufs $mntPath/ready"
+  umount.aufs "$mntPath/ready"
+  chkEx || return $?
+  sleep 3
+fi
+
+upperDir=",upperdir=$mntPath/overlay"
+workDir=",workdir=$mntPath/workdir"
+
+branches="br:$mntPath/overlay=rw:$overlayLowerDir=ro"
+opts="udba=reval,acl,user_xattr"
+
+stage="Mount aufs"
+echo $stage
+echo "CMD: mount -t aufs -o \"$branches\" -o \"$opts\""
+mount -t aufs -o "$branches" -o "$opts" none "$mntPath/ready"
+chkEx || return $?
+stage=""

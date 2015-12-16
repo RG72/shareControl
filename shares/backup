@@ -1,0 +1,27 @@
+#Размер раздела overlay
+dayLimit=80g
+compress="7z"
+
+compExt=()
+compExt+=("bak")
+compExt+=("dat")
+compExt+=("mdf")
+
+addDateTo=()
+addDateTo+=("onkos/onkos.mdf")
+
+#postRm+=("nas/")
+postRmExclude+=("./directum/1DIFFERENTIAL_BACKUP")
+postRmAllFiles=1
+
+saveDays=4
+saveWeeks=0
+saveMonth=12
+
+smbConf+=("browseable = no")
+smbConf+=("force create mode = 0666")
+smbConf+=("create mask = 0666")
+smbConf+=("force directory mode = 1777")
+smbConf+=("directory mask = 1777")
+
+showStates=1

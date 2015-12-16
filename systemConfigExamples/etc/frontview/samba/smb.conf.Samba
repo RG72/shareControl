@@ -1,0 +1,2 @@
+ use sendfile = 1
+ deadtime = 0

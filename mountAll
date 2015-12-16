@@ -1,0 +1,69 @@
+#!/bin/bash
+#Костыль минимальное кол-во памяти для ядра... я так понял
+sysctl -w vm.min_free_kbytes=300000
+#Не позволяет выделить памяти больше чем её есть
+sysctl -w vm.overcommit_memory=2
+sysctl -w vm.overcommit_ratio=80
+
+baseDir="/shareControl/"
+. $baseDir/config
+wrapper()
+{
+stage="mounting"
+#systemctl stop smbd
+for share in $shares; do
+  . $eachShare
+
+  Cnt=0
+  CntVol=0
+  for (( day=0; day<=dayCount+maxday; day+=1 )); do
+    . $eachDay
+
+    #Есть ли такой раздел?
+    if [ -b $lvmVol ]; then
+      CntVol=`expr $CntVol + 1`
+      break
+    else
+      echo "have not lv $lvmVol"
+    fi
+  done
+
+  #На всякий случай проверяем количество разделов overlay для данной шары
+  chkCntVol=`lvs | grep "overlay_"$share"_" | wc --lines`
+  if [ $CntVol -ne $chkCntVol ]; then
+    echo "Error, lvs show $chkCntVol but we expect only $CntVol $lvmVol"
+    return 1
+  fi
+  #Проверка пройдена
+  echo "PASS lvs show $chkCntVol and we count $CntVol"
+
+  if ! grep -qs "$mntPathBase" /proc/mounts; then
+    echo "not mounted $mntPathBase, trying 'mount $lvmVolBase $mntPathBase -o $mountOptions'"
+    mount "$lvmVolBase" "$mntPathBase" -o $mountOptions
+    chkEx || return $?
+  fi
+
+  if [ $CntVol -eq 0 ]; then
+    #New overlay lv
+    day=0
+    . $eachDay
+
+    . $createLv
+    CntVol=1
+  fi
+  if [ $CntVol -eq 1 ]; then
+    . $tryRemount
+    overlayLowerDir=$states"/last"
+    overlayfsOptions=$overlayOptions
+    echo "Mount a overlay from $overlayLowerDir to $mntPath/ready "$overlayfsOptions
+    
+    #echo "!WARNING: Aufs overlay temporaly disabled"
+    . $tryMountOverlay
+    #Сделаем линк на самую новую папку ready
+    ln -sf $mntPath"/ready" $readyLinkDir$share
+  fi
+done
+systemctl start smbd
+chkEx || return $?
+}
+wrapper || exit $?

@@ -1,0 +1,131 @@
+processAShare()
+{
+  #share=$1
+  stage="find nearest overlay lv"
+  . $eachShare
+
+  snaped=0
+  for (( day=0; day<=$maxday; day+=1 )); do
+    . $eachDay
+    
+    #Есть ли такой раздел?
+    if [ -b $lvmVol ] && [ $snaped -eq 0 ]; then
+      echo "Found Day $share $day"
+      #Нашли ближайший день
+
+      if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+        stage="unmount overlayfs"
+        echo $stage
+        . $tryUmountOverlay
+        chkEx || return $?
+        stage="Remount overlay partition"
+        echo $stage
+        . $tryRemount
+        chkEx || return $?
+      fi #only snap=0?
+      
+      echo "createSnap"
+      errCnt=0
+      . $createSnap
+      chkEx || return $?
+      cd "$baseDir"
+
+      echo "Have a $errCnt errors for $share"
+      if [ $errCnt -ne 0 ]; then
+        if [ ! -z $logFile ]; then
+          /root/sendNotify "Create snapshot $share" "ErrCnt:$errCnt Share:$share Stage:$stage " "--attach-name log.txt --attach $logFile"
+        fi
+      elif [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+        #Have no error on createSnap
+        #And onlySnap=0
+
+        #Remove old overlay volume
+        stage="Remove old  overlay volume $share"
+        echo $stage
+        #for (( day1=0; day1<=maxday; day1+=1 )); do
+        #  . $eachDay
+          #Есть ли такой раздел?
+        #  if [ -b $lvmVol ]; then
+            if grep -qs "$mntPath" /proc/mounts; then
+              stage="umount overlayfs"
+              echo $stage
+              . $tryUmountOverlay
+              chkEx || return $?
+
+              stage="umount $mntPath"
+              echo $stage
+              umount $mntPath
+              chkEx || return $?
+            fi
+            stage="Zero first 2 mb of partition $lvmVol"
+            echo $stage
+            dd "if=/dev/zero" "of=$lvmVol" bs=1M count=2
+            chkEx || return $?
+
+            stage="lvremove $lvmVol"
+            echo $stage
+            lvremove $lvmVol --force --verbose
+            chkEx || return $?
+            rm -Rf $mntPath
+        #  fi
+        #done
+        #echo "Remove lvs finished $share"
+        day1=0
+        . $eachDay
+        day1=""
+
+        . $createLv
+
+        overlayLowerDir=$states"/last"
+        . $tryMountOverlay
+        stage="make symlink $mntPath/ready to $readyLinkDir$share"
+        echo $stage
+        #Сделаем линк на самую новую папку ready
+        rm -f $readyLinkDir$share
+        ln -s $mntPath"/ready" $readyLinkDir$share
+
+        if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+          cd "$mntPath/ready"
+
+          #Чистим локи
+          echo "Clean locks"
+          find -name '~$*' -print0 | while read -r -d $'\0' FILE; do
+            if [ -f "$FILE" ]; then
+              rm -fv "$FILE"
+            fi
+          done
+          
+          echo "Remove files by mask"
+          for rmMask in "${postRm[@]}"; do
+            stage="Remove files by mask $rmMask*"
+            echo $stage
+            rm -fvR "$rmMask"*
+          done
+          #chkEx || return $?
+	  
+	  echo "Remove all files"
+          if [ $postRmAllFiles -eq 1 ]; then
+            stage="Remove all files at $mntPath/ready"
+            echo $stage
+            find -print0 | while read -r -d $'\0' FILE; do
+              nrm=1
+              for rmExc in "${postRmExclude[@]}"; do
+                if [[ "$FILE" =~ ^"$rmExc" ]]; then
+                  echo "Exclude by $rmExc"
+                  nrm=0
+                fi
+              done
+              if [ -f "$FILE" ] && [ $nrm -eq 1 ]; then
+                rm -fv "$FILE"
+              fi
+            done
+          fi
+          cd "$baseDir"
+        fi
+      fi #errors on createSnap, onlySnap=0?
+      snaped=1
+    elif [ $snaped -eq 0 ]; then
+      echo "Have not lv $lvmVol"
+    fi #if have lv for day
+  done
+}

@@ -1,0 +1,17 @@
+#!/bin/bash
+#baseDir="/shareControl/"
+#share="TOOD2"
+#readyLinkDir="/c/"
+echo ""
+echo "Clean up $share"
+cd $readyLinkDir$share
+find -name '~$*' -print0 | while read -r -d $'\0' FILE; do
+  if [ -f "$FILE" ]; then
+    rm -fv "$FILE"
+    #echo "rm -f \"$FILE\""
+  fi
+done
+cd $baseDir
+echo "Finish cleanUp"
+echo ""
+

@@ -1,0 +1,51 @@
+[Admins]
+  path = /c/Admins
+  comment = "Admins"
+  browseable = no
+  oplocks = 1
+  admin users = "admin","TOOD2\Administrator"
+  writeable = 1
+  guest ok = 1
+
+[TOOD2]
+  path = /c/TOOD2
+  comment = "TOOD2"
+  oplocks = 1
+  admin users = "admin","TOOD2\Administrator"
+  writeable = 1
+  guest ok = 1
+
+[USB_HDD_1]
+  path = /USB/USB_HDD_1
+  comment = "WD Elements 1042"
+  admin users = "admin","TOOD2\Administrator"
+  available = 0
+  valid users = "admin","TOOD2\Administrator","nobody"
+  write list = "admin","TOOD2\Administrator"
+
+[backup]
+  path = /c/backup
+  comment = "Backup Share"
+  browseable = no
+  oplocks = 1
+  force create mode = 0666
+  create mask = 0666
+  force directory mode = 1777
+  directory mask = 1777
+  admin users = "admin","TOOD2\Administrator"
+  writeable = 1
+  guest ok = 1
+
+[media]
+  path = /c/media
+  comment = "Media Server Share"
+  browseable = no
+  oplocks = 1
+  force create mode = 0666
+  create mask = 0666
+  force directory mode = 1777
+  directory mask = 1777
+  admin users = "admin","TOOD2\Administrator"
+  writeable = 1
+  guest ok = 1
+

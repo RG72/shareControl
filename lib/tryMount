@@ -1,0 +1,28 @@
+if [ ! -d $mntPath ]; then
+  mkdir $mntPath
+  chkEx
+fi
+readWrite=""
+#if [ $i -ne 0 ]; then
+#  readWrite="ro,"
+#else
+#  readWrite="rw,"
+#fi
+#echo "Day=$i rw=$readWrite"
+
+stage="Mount overlay partition"
+echo $stage
+
+if grep -qs "$mntPath" /proc/mounts; then
+  echo "Already mounted "$mntPath", remounting"
+  mount "/dev/$vg/$overlayVolumeName" $mntPath -o remount,$readWrite$mountOptions
+else
+  echo "not mounted "$mntPath", mounting"
+  mount "/dev/$vg/$overlayVolumeName" $mntPath -o $readWrite$mountOptions
+fi
+
+chkEx || return $?
+
+mkdir -p $mntPath"/workdir"
+mkdir -p $mntPath"/overlay"
+mkdir -p $mntPath"/ready"

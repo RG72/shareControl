@@ -1,0 +1,15 @@
+#Размер раздела overlay
+dayLimit=25g
+
+saveDays=7
+saveWeeks=4
+saveMonth=4
+
+showStates=1
+showChanges=1
+
+smbConf+=("directory mask=2770")
+smbConf+=("force directory mode=2770")
+smbConf+=("create mask = 2770")
+smbConf+=("force create mode=2770")
+

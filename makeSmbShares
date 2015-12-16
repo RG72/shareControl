@@ -1,0 +1,61 @@
+#!/bin/bash
+baseDir="/shareControl/"
+. $baseDir/config
+
+basename=`basename $0`
+stopCheck=0
+while [ $stopCheck -ne 1 ]; do
+  stopCheck=1
+  for pid in $(pidof -x $basename); do
+    if [ $pid != $$ ]; then
+      echo "[$(date)] : $basename : Process is already running with PID $pid"
+      #if [ "$level" == "Hours" ]; then
+        exit 1
+      #else
+#        echo "Wait for a 5 sec and check again"
+#        sleep 5
+#        stopCheck=0
+#      fi
+    fi
+  done
+done
+
+wrapper(){
+  out=$baseDir"Shares.conf"
+  echo "">$out
+  for share in $shares; do
+    stage="Make smb config to $out"
+    . $eachShare
+    for mode in normal states changes; do
+      allow=0
+      writable="0"
+      suffix=""
+      if [ "$mode" == "normal" ]; then
+        allow=1
+        writable="1"
+        path=$readyLinkDir$share
+      elif [ "$mode" == "states" ] && [ $showStates -eq 1 ]; then
+        allow=1
+        suffix="_$mode"
+        path=$states
+      elif [ "$mode" == "changes" ] && [ $showChanges -eq 1 ]; then
+        allow=1
+        suffix="_$mode"
+        path=$changes
+      fi
+      if [ $allow -eq 1 ]; then
+        echo "[$share$suffix]">>$out
+        echo "  path = $path">>$out
+        echo "  comment = \"$share $mode\"">>$out
+        echo "  writeable = $writable">>$out
+        for smbLine in "${smbConf[@]}" ; do
+          echo "  "$smbLine>>$out
+        done
+        echo "">>$out
+      fi
+    done
+  done #each share
+#  cat $out
+  echo "Success"
+}
+wrapper || exit $?

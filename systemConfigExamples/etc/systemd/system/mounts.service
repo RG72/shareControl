@@ -1,0 +1,12 @@
+[Unit]
+Description=Mount script
+After=network.target nmbd.service winbindd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/shareControl/mountAll
+ExecStop=/shareControl/umountAll
+
+[Install]
+WantedBy=multi-user.target

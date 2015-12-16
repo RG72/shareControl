@@ -1,0 +1,3 @@
+ use sendfile = 1
+ reverse sendfile = 0
+ deadtime = 10

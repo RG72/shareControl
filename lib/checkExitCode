@@ -1,0 +1,42 @@
+chkEx()
+{
+  exitCode=$?
+  if [ $exitCode -ne 0 ]; then
+    echo "exitCode "$exitCode
+    echo "Somthing wrong, stop script"
+    if [ ! -z $logFile ]; then
+      #"--attach-name log.txt --attach $logFile"
+      tailedLog=`tail -n 10 "$logFile"`
+      body=`echo -e "Exit code:$exitCode\nShare:$share Stage:$stage\n\n$tailedLog"`
+      /root/sendNotify "Snap $stage" "$body"
+      /root/telegram-bot-bash/sendNotify -l1 -t "$body"
+    fi
+    return $exitCode
+    #pid=$$
+    #kill $pid
+  fi
+  return 0
+}
+
+errCnt=0
+incErrCnt()
+{
+  if [ $? -ne 0 ]; then
+    errCnt=`expr "$errCnt" + 1`
+  fi
+}
+
+logTo(){
+  #Truncate file
+  echo "">$1
+  # Close STDOUT file descriptor
+  exec 1<&-
+  # Close STDERR FD
+  exec 2<&-
+
+  # Open STDOUT as $LOG_FILE file for read and write.
+  exec 1<>$1
+
+  # Redirect STDERR to STDOUT
+  exec 2>&1
+}

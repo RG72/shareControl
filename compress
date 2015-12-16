@@ -1,0 +1,109 @@
+#!/bin/bash
+baseDir="/shareControl/"
+. $baseDir/config
+
+basename=`basename $0`
+stopCheck=0
+while [ $stopCheck -ne 1 ]; do
+  stopCheck=1
+  for pid in $(pidof -x $basename); do
+    if [ $pid != $$ ]; then
+      echo "[$(date)] : $basename : Process is already running with PID $pid"
+      #if [ "$level" == "Hours" ]; then
+        exit 1
+      #else
+#        echo "Wait for a 5 sec and check again"
+#        sleep 5
+#        stopCheck=0
+#      fi
+    fi
+  done
+done
+
+wrapper(){
+for share in $shares; do
+  . $eachShare
+  echo "Share $share"
+  stage="chk $mntPathBase is mounted"
+  grep -qs "$mntPathBase" /proc/mounts
+  chkEx || return $?
+done
+
+DT=`date +%Y%m%d_%H%M`
+
+for share in $shares; do
+  stage="Compress files"
+  . $eachShare
+
+  for (( day=0; day<=$maxday; day+=1 )); do
+    . $eachDay
+    #Есть ли такой раздел?
+    if grep -qs "$mntPath" /proc/mounts; then
+      #Нашли ближайший примонтированный оверлэй раздел
+      if [ ! "$compress" == "" ]; then
+        echo "NEED COMPRESS $compress"
+        cd "$overlayChanges"
+	find -print0 | while read -r -d $'\0' FILE; do
+	  F=`echo "$FILE" | sed 's/^\.\///'`
+	  DIR=`dirname "$F"`
+	  FILENAME=$(basename "$F")
+	  if [ -f "$FILE" ]; then
+	    for fileForMv in "${addDateTo[@]}" ; do
+	      if [ "$fileForMv" == "$F" ]; then
+	        dst="$DIR/$DT$FILENAME"
+	        mv "$F" "$dst"
+	        chkEx || return $?
+	        F=$dst
+	      fi
+	    done
+	    for ext in "${compExt[@]}" ; do
+              #echo "Ext: "$ext" $F"
+              #if [ (echo "$F" | grep -Eq  "$ext") ]; then
+              if [[ "$F" =~ \."$ext"$ ]]; then
+	        dst="$readyLinkDir$share/$F.7z"
+	        src="$readyLinkDir$share/$F"
+	        stage="pack to $dst from $src"
+	        echo $stage
+	        nice -n 20 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "$dst" "$src"
+	        chkEx || return $?
+
+	        echo "Copy owner"
+	        chown "--reference=$F" "$dst"
+	        chkEx || return $?
+	        
+	        echo "Copy modes"
+	        chmod "--reference=$F" "$dst"
+	        chkEx || return $?
+	        
+	        echo "Copy acls"
+	        getfacl "$F" | setfacl -bnM - "$dst"
+	        chkEx || return $?
+
+	        echo "Copy xattr"
+	        #getfattr --dump "$F" | setfattr --restore=- "$dst"
+	        (echo "# file: $dst" && (getfattr --dump "$F" | tail -n +2)) | setfattr --restore=-
+	        #chkEx || return $?
+
+	        echo "rm -f \"$src\""
+	        rm -f "$src"
+	        chkEx || return $?
+	      fi
+            done
+          fi
+
+	  #if [ -f "$FILE" ]; then
+	    #echo "is File"
+	  #fi
+	  #echo "Item:$F Dir:$DIR"
+	done
+	cd $baseDir
+      fi
+
+      #Заканчиваем поиск ближайшего оверлея
+      break
+    fi
+  done #each day
+done #each share
+
+}
+wrapper || exit $?

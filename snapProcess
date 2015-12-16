@@ -1,0 +1,78 @@
+#!/bin/bash
+baseDir="/shareControl/"
+. $baseDir/config
+#level=$1
+
+
+basename=`basename $0`
+stopCheck=0
+while [ $stopCheck -ne 1 ]; do
+  stopCheck=1
+  for pid in $(pidof -x $basename); do
+    if [ $pid != $$ ]; then
+      echo "[$(date)] : $basename : Process is already running with PID $pid"
+#      exit 1
+      echo "Wait for a 60 sec and check again"
+      sleep 60
+      stopCheck=0
+    fi
+  done
+done
+
+#/root/dropCaches
+
+. $baseDir"lib/processAShare"
+
+if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+  echo "prepare and snap zero!"
+else
+  echo "prepare or snap enabled"
+fi
+#exit 1
+
+wrapper(){
+day=0
+for share in $shares; do
+  stage=""
+  . $eachShare
+  #. $eachDay
+  stage="chk $mntPathBase is mounted"
+  echo "$stage $share"
+  grep -qs "$mntPathBase" /proc/mounts
+  chkEx || return $?
+done
+echo "base volumes mounted"
+echo ""
+
+if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+  stage="stop smbd"
+  echo $stage
+  systemctl stop smbd
+fi
+
+for share in $shares; do
+  echo "----- Share $share -----"
+  #На всякий случай проверяем количество разделов overlay для данной шары
+  chkCntVol=`lvs | grep "overlay_"$share"_" | wc --lines`
+  if [ "$chkCntVol" -ne 1 ]; then
+    echo "Expect only 1 lv, but found a $chkCntVol"
+    #return 3
+  else
+    processAShare || return $?
+  fi
+  echo "----- finish share $share -----"
+  echo ""
+
+done
+
+if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+  stage="Start smbd"
+  echo $stage
+  systemctl start smbd
+  chkEx || return $?
+fi
+}
+
+wrapper || exit $?
+/root/telegram-bot-bash/sendNotify -l3 -t "Success snapshot onlyPrepare=$onlyPrepare onlySnap=$onlySnap"
+echo "Success!"

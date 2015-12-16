@@ -1,0 +1,17 @@
+remountOpt=""
+if grep -qs "$mntPath/ready" /proc/mounts; then
+  #remountOpt="remount,"
+  stage="umount $mntPath/ready"
+  umount "$mntPath/ready"
+  chkEx || return $?
+  sleep 3
+fi
+
+upperDir=",upperdir=$mntPath/overlay"
+workDir=",workdir=$mntPath/workdir"
+
+#echo "Overlay Day=$i rw=$readWrite"
+stage="Mount overlayfs with options=$remountOpt$overlayfsOptions,lowerdir=$overlayLowerDir$upperDir$workDir"
+mount -t overlay overlay -o "$remountOpt$overlayfsOptions,lowerdir=$overlayLowerDir$upperDir$workDir" "$mntPath/ready"
+chkEx || return $?
+stage=""

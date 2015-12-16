@@ -1,0 +1,112 @@
+#!/bin/bash
+baseDir="/shareControl/"
+. $baseDir/config
+
+basename=`basename $0`
+stopCheck=0
+while [ $stopCheck -ne 1 ]; do
+  stopCheck=1
+  for pid in $(pidof -x $basename); do
+    if [ $pid != $$ ]; then
+      echo "[$(date)] : $basename : Process is already running with PID $pid"
+#      exit 1
+      echo "Wait for a 60 sec and check again"
+      sleep 60
+      stopCheck=0
+    fi
+  done
+done
+
+wrapper(){
+day=0
+for share in $shares; do
+  stage=""
+  . $eachShare
+  #. $eachDay
+  stage="chk $mntPathBase is mounted"
+  echo "$stage $share"
+  grep -qs "$mntPathBase" /proc/mounts
+  chkEx || return $?
+done
+echo "base volumes mounted"
+echo ""
+stage=""
+
+for share in $shares; do
+  echo "----- Rotate states $share -----"
+  . $eachShare
+  needDays=()
+  for (( day=0; day<=maxdayRotate; day+=1 )); do
+    saveThisDay=0
+    if [ $saveDays -gt 0 ]; then
+      ((saveDays--))
+      saveThisDay=1
+    fi
+    
+    
+    if [ $saveWeeks -gt 0 ]; then
+      dow=`date "--date=$day day ago" "+%u"`
+      if [ "$dow" == "1" ]; then
+        ((saveWeeks--))
+        saveThisDay=1
+      fi
+    fi
+    
+    
+    if [ $saveMonth -gt 0 ]; then
+      dom=`date "--date=$day day ago" "+%d"`
+      if [ "$dom" == "01" ]; then
+        ((saveMonth--))
+        saveThisDay=1
+      fi
+    fi
+    
+    if [ $saveThisDay -eq 1 ]; then
+      curDay=`date "--date=$day day ago" "+%Y%m%d"`
+      needDays+=($curDay)
+    fi
+  done
+  
+  cd "$states"
+  for stateDir in *; do
+    if [[ "$stateDir" =~ ^[0-9]{8,8}_ ]]; then
+      rmState=1
+      for nDay in "${needDays[@]}"; do
+        #echo "nDay=$nDay"
+        if [[ "$stateDir" =~ ^"$nDay"_ ]]; then
+          rmState=0
+        fi
+      done
+      if [ $rmState -eq 1 ] && [ -d $stateDir ]; then
+        echo "Rm State "$stateDir
+        rm -Rf "$stateDir"
+        chkEx || return $?
+      fi
+    fi
+  done
+  
+  cd "$changes"
+  for changesDir in *; do
+    if [[ "$changesDir" =~ ^[0-9]{8,8}_ ]]; then
+      rmChange=1
+      for nDay in "${needDays[@]}"; do
+        #echo "nDay=$nDay"
+        if [[ "$changesDir" =~ ^"$nDay"_ ]]; then
+          rmChange=0
+        fi
+      done
+      if [ $rmChange -eq 1 ] && [ -d $changesDir ]; then
+        echo "Rm changes "$changesDir
+        rm -Rf "$changesDir"
+        chkEx || return $?
+      fi
+    fi
+  done
+  echo "----- End   rotate  $share -----"
+  echo ""
+done
+}
+
+wrapper || exit $?
+/root/telegram-bot-bash/sendNotify -l3 -t "Success rotate"
+echo "Success!"

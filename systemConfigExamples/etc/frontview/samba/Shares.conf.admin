@@ -1,0 +1,14 @@
+
+[home]
+  path = "/c/home"
+  admin users = "admin","TOOD2\Administrator"
+  comment = "Private user folders"
+  writeable = 1
+  valid users = "admin","TOOD2\Administrator"
+
+[c]
+  path = /c
+  admin users = "admin","TOOD2\Administrator"
+  comment = "Volume C"
+  writeable = 1
+  valid users = "admin","TOOD2\Administrator"

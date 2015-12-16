@@ -1,0 +1,26 @@
+if [ ! -z "$stage" ]; then
+  echo $stage" "$share
+fi
+
+#Default settings for share
+compress=""
+postRm=()
+postRmExclude=()
+postRmAllFiles=0
+vg=$defaultVg
+saveDays=0
+saveWeeks=0
+saveMonth=0
+
+showStates=0
+showChanges=0
+smbConf=()
+smbConf+=("oplocks = 1")
+smbConf+=("admin users = \"admin\",\"TOOD2\Administrator\"")
+smbConf+=("guest ok = 1")
+
+source $sharesDir"/"$share
+lvmVolBase="/dev/"$vg"/"$share
+mntPathBase=$persistentDir$share
+states=$persistentDir$share"/states"
+changes=$persistentDir$share"/changes"

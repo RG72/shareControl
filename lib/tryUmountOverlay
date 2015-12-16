@@ -1,0 +1,7 @@
+if grep -qs "$mntPath/ready" /proc/mounts; then
+  #Удаляем ссылку на машину времени
+  #. $baseDir"lib/timeMachineRemoveLink"
+
+  umount "$mntPath/ready"
+  chkEx || return $?
+fi

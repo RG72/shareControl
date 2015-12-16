@@ -1,0 +1,39 @@
+basename=`basename $0`
+onlySnap=0
+onlyPrepare=0
+logFile=""
+snapTo=`date +%Y%m%d_%H%M`
+preparedAt=`date -d '1 hour ago' "+%Y%m%d_%H%M"`
+
+for i in "$@"
+do
+case $i in
+  --log=*)
+  logFile="${i#*=}"
+  shift # past argument=value
+  ;;
+  --snapTo=*)
+  snapTo="${i#*=}"
+  ;;
+  --preparedAt=*)
+  preparedAt="${i#*=}"
+  ;;
+  --onlySnap*)
+  onlySnap=1
+  ;;
+  --onlyPrepare*)
+  onlyPrepare=1
+  ;;
+  #--action=*)
+  #action="${i#*=}"
+  #shift # past argument=value
+  #;;
+  *)
+  echo "Useage: $basename [options]"
+  echo "--log=/path/to/logfile"
+  echo "--onlySnapshot"
+  # unknown option
+  ;;
+esac
+done
+

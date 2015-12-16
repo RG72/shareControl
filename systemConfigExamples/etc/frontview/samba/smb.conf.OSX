@@ -1,0 +1,6 @@
+ use sendfile = 1
+ deadtime = 10
+ vfs objects = acl_xattr
+ unix extensions = 1
+ veto files = ""
+ allocation roundup size = 4096

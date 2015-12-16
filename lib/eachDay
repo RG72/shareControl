@@ -1,0 +1,9 @@
+dday=$day
+if [ ! -z $day1 ]; then dday=$day1; fi
+#echo "dday=$dday"
+curDay=`date "--date=$dday day ago" "+%Y%m%d"`
+overlayVolumeName="overlay_"$share"_"$curDay
+overlayVolumeLabel=$share$curDay
+lvmVol="/dev/"$vg"/"$overlayVolumeName
+mntPath=$overlayDir$share"_"$curDay
+overlayChanges=$mntPath"/overlay"

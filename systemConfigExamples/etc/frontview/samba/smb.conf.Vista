@@ -1,0 +1,3 @@
+ use sendfile = 1
+ deadtime = 10
+ vfs objects = acl_xattr

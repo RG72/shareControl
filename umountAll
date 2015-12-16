@@ -1,0 +1,38 @@
+#!/bin/bash
+baseDir="/shareControl/"
+. $baseDir/config
+wrapper()
+{
+stage="unmounting"
+systemctl stop smbd
+chkEx || return $?
+for share in $shares; do
+  . $eachShare
+
+  for (( day=0; day<=dayCount+10; day+=1 )); do
+    . $eachDay
+#    echo "Day "$day" Date="$curDay" $mntPath $mntPathBase"
+
+    #Есть ли такой раздел?
+    if [ -b $lvmVol ]; then
+      if grep -qs "$mntPath" /proc/mounts; then
+        . $tryUmountOverlay
+        umount $mntPath
+        chkEx || return $?
+        rmdir $mntPath
+        chkEx || return $?
+      fi
+    fi
+  done
+
+  rm $readyLinkDir$share -f
+
+  #Отмонтируем папку
+  if grep -qs "$mntPathBase" /proc/mounts; then
+    umount $mntPathBase
+    chkEx || return $?
+  fi
+done
+#systemctl start smbd
+}
+wrapper || exit $?

@@ -1,0 +1,35 @@
+if [ ! -z $timeMachineShare ]; then
+  echo "Making a links to a time machine"
+  if [ ! -d $readyLinkDir$timeMachineShare ]; then
+    mkdir $readyLinkDir$timeMachineShare
+    . $chkEx
+  fi
+
+  if [ $timeMachineReady -eq 1 ]; then
+    linkDest=$readyLinkDir$timeMachineShare"/ready_"$curDay
+    if [ ! -d $linkDest ]; then
+      mkdir $linkDest
+    fi
+    umount $linkDest
+    rw="ro"
+    if [ $i -lt $timeMachineRwReady ]; then
+      rw="rw"
+    fi
+    mount --bind $mntPath/ready $linkDest -o "$rw"
+    . $chkEx
+   fi
+
+  if [ $timeMachineChanges -eq 1 ]; then
+    linkDest=$readyLinkDir$timeMachineShare"/changes_"$curDay
+    if [ ! -d $linkDest ]; then
+      mkdir $linkDest
+    fi
+    umount $linkDest
+    rw="ro"
+    if [ $i -lt $timeMachineRwChanges ]; then
+      rw="rw"
+    fi
+    mount --bind $mntPath/overlay $linkDest -o "$rw"
+    . $chkEx
+  fi
+fi
