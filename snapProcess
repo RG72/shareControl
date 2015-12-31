@@ -74,5 +74,10 @@ fi
 }
 
 wrapper || exit $?
-/root/telegram-bot-bash/sendNotify -l3 -t "Success snapshot onlyPrepare=$onlyPrepare onlySnap=$onlySnap"
+level=5
+if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
+  level=3
+fi
+/root/telegram-bot-bash/sendNotify -l$level -t "Success snapshot onlyPrepare=$onlyPrepare onlySnap=$onlySnap"
+
 echo "Success!"

@@ -46,7 +46,7 @@ if [ $onlyPrepare -eq 0 ]; then
   fi
 
 
-  mkdir -p "$dstChanges"
+  #mkdir -p "$dstChanges"
 
   echo ""
   echo "Enumerate changes:"
@@ -101,7 +101,7 @@ if [ $onlyPrepare -eq 0 ]; then
         mkdir -p "$dst/$DIR"
         mkdir -p "$last/$DIR"
       fi
-      mkdir -p "$dstChanges/$DIR"
+      #mkdir -p "$dstChanges/$DIR"
       #Dir with attributes
       rsync -ad --numeric-ids --acls --xattrs --no-recursive --exclude='*' "$changesSync/$F/" "$dst/$F"
       incErrCnt
