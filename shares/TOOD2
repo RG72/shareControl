@@ -1,5 +1,5 @@
 #Размер раздела overlay
-dayLimit=25g
+dayLimit=50g
 
 saveDays=7
 saveWeeks=4

@@ -9,8 +9,7 @@ sharesDir=$baseDir"shares"
 
 maxday=40
 maxdayRotate=400
-#snapshotDateTime=`date +%Y%m%d_%H%M`
-#snapshotDateTimeForMove=`date -d '1 hour ago' "+%Y%m%d_%H%M"`
+. $baseDir"lib/waitLsof"
 
 eachShare=$baseDir"lib/eachShare"
 eachDay=$baseDir"lib/eachDay"

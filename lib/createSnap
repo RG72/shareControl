@@ -101,15 +101,24 @@ if [ $onlyPrepare -eq 0 ]; then
         mkdir -p "$dst/$DIR"
         mkdir -p "$last/$DIR"
       fi
-      #mkdir -p "$dstChanges/$DIR"
+
+      #Пока будем удалять аттрибут отвечающий за перезапись каталога
+      #проверять атрибут и удалить папку в месте назначения, если он есть
+      setfattr --remove "trusted.overlay.opaque" "$changesSync/$F/"
+      if [ $? -eq 0 ]; then
+        #Успешно удалили атрибут, значит нужно удалить папку в месте назначения
+        rm -Rf "$dst/$F"
+        rm -Rf "$last/$F"
+      fi
+
       #Dir with attributes
       rsync -ad --numeric-ids --acls --xattrs --no-recursive --exclude='*' "$changesSync/$F/" "$dst/$F"
       incErrCnt
-    
+
       #Атрибуты для папки в last
       rsync -ad --numeric-ids --acls --xattrs --no-recursive --exclude='*' "$changesSync/$F/" "$last/$F"
       incErrCnt
-    
+
       #Аттрибуты для папки в changes
       #rsync -ad --numeric-ids --acls --xattrs --no-recursive --exclude='*' "$changesSync/$F/" "$dstChanges/$F"
       #incErrCnt

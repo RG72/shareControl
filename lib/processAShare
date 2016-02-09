@@ -42,34 +42,32 @@ processAShare()
         #Remove old overlay volume
         stage="Remove old  overlay volume $share"
         echo $stage
-        #for (( day1=0; day1<=maxday; day1+=1 )); do
-        #  . $eachDay
-          #Есть ли такой раздел?
-        #  if [ -b $lvmVol ]; then
-            if grep -qs "$mntPath" /proc/mounts; then
-              stage="umount overlayfs"
-              echo $stage
-              . $tryUmountOverlay
-              chkEx || return $?
+        if grep -qs "$mntPath" /proc/mounts; then
+          stage="umount overlayfs"
+          echo "$stage"
+          . $tryUmountOverlay
+          chkEx || return $?
 
-              stage="umount $mntPath"
-              echo $stage
-              umount $mntPath
-              chkEx || return $?
-            fi
-            stage="Zero first 2 mb of partition $lvmVol"
-            echo $stage
-            dd "if=/dev/zero" "of=$lvmVol" bs=1M count=2
-            chkEx || return $?
+	  #Check, path is used or not?
+          waitLsof $mntPath
 
-            stage="lvremove $lvmVol"
-            echo $stage
-            lvremove $lvmVol --force --verbose
-            chkEx || return $?
-            rm -Rf $mntPath
-        #  fi
-        #done
-        #echo "Remove lvs finished $share"
+          stage="umount $mntPath"
+          echo "$stage"
+          umount "$mntPath"
+          chkEx || return $?
+        fi
+
+        stage="Zero first 2 mb of partition $lvmVol"
+        echo $stage
+        dd "if=/dev/zero" "of=$lvmVol" bs=1M count=2
+        chkEx || return $?
+
+        stage="lvremove $lvmVol"
+        echo $stage
+        lvremove $lvmVol --force --verbose
+        chkEx || return $?
+        rm -Rf $mntPath
+
         day1=0
         . $eachDay
         day1=""
@@ -94,7 +92,7 @@ processAShare()
               rm -fv "$FILE"
             fi
           done
-          
+
           echo "Remove files by mask"
           for rmMask in "${postRm[@]}"; do
             stage="Remove files by mask $rmMask*"
@@ -102,8 +100,8 @@ processAShare()
             rm -fvR "$rmMask"*
           done
           #chkEx || return $?
-	  
-	  echo "Remove all files"
+
+          echo "Remove all files"
           if [ $postRmAllFiles -eq 1 ]; then
             stage="Remove all files at $mntPath/ready"
             echo $stage

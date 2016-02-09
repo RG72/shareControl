@@ -1,0 +1,16 @@
+waitLsof()
+{
+  toExit=0
+
+  while [ $toExit -eq 0 ]; do
+    echo "wait $1 to free"
+    res=`lsof | grep $1`
+    if [ $? -eq 0 ]; then
+      /root/telegram-bot-bash/sendNotify -l2 -t "Path $1 is busy"
+      sleep 180
+    else
+      echo "Path $1 is not busy"
+      toExit=1
+    fi
+  done
+}
