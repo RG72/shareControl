@@ -24,5 +24,10 @@ fi
 #echo "Try mount $mntPath"
 . $tryRemount
 mkdir -p $mntPath"/workdir"
-mkdir -p $mntPath"/overlay"
+mkdir -p "$mntPath/overlay"
 mkdir -p $mntPath"/ready"
+
+#Temporary fix of folder renaming
+#Create empty dirs at upper dir
+#TODO modify samba sources
+#rsync -ar --numeric-ids --acls --xattrs --include='*/' --exclude='*' "$overlayLowerDir/" "$mntPath/overlay"

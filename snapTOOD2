@@ -1,0 +1,11 @@
+#!/bin/bash
+snapshotDateTime=`date +%Y%m%d_%H%M`
+cd /persistent/TOOD2/states
+rsync -arv --delete --xattrs --acls /persistent/TOOD2last/ ./last
+if [ $? -eq 0 ]; then
+  /root/telegram-bot-bash/sendNotify -l3 -t "rsync TOOD2 success"
+else
+  /root/telegram-bot-bash/sendNotify -l2 -t "failed rsync TOOD2"
+fi
+mv last "$snapshotDateTime"
+cp -Ralp "$snapshotDateTime" last

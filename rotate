@@ -108,5 +108,5 @@ done
 }
 
 wrapper || exit $?
-/root/telegram-bot-bash/sendNotify -l3 -t "Success rotate"
+/root/telegram-bot-bash/sendNotify -l4 -t "Success rotate"
 echo "Success!"

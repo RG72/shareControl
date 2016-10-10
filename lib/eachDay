@@ -5,5 +5,6 @@ curDay=`date "--date=$dday day ago" "+%Y%m%d"`
 overlayVolumeName="overlay_"$share"_"$curDay
 overlayVolumeLabel=$share$curDay
 lvmVol="/dev/"$vg"/"$overlayVolumeName
-mntPath=$overlayDir$share"_"$curDay
+#mntPath=$overlayDir$share"_"$curDay
+mntPath="$mntPathBase/$curDay"
 overlayChanges=$mntPath"/overlay"

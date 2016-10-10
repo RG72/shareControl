@@ -11,18 +11,21 @@
 dstForMove=$states"/"$preparedAt
 dst=$states"/"$snapTo
 dstChanges=$changes"/"$snapTo
-changesSync=$changes"/.sync"
+#changesSync=$changes"/.sync"
+changesSync="$overlayChanges"
 last=$states"/last"
 if [ -d "$dstForMove" ]; then
   echo "Move folder $dstForMove to $dst"
   mv "$dstForMove" "$dst"
 elif [ $onlyPrepare -eq 1 ] && [ $onlySnap -eq 0 ]; then
   echo "Only rsync changes"
+  echo "!!!deprecated action"
 else
   echo "Try clean dir $dst"
   rm -Rf "$dst"
   echo "cp last to $snapTo"  
   cp -Ralp "$last" "$dst"
+  incErrCnt
 fi
 
 #sync changes
@@ -30,9 +33,9 @@ if [ ! -d "$overlayChanges" ]; then
   echo "!!Dir does not exists $overlayChanges"
   return 2
 fi
-echo "Rsync changes from overlay to persistent drive"
-rsync -arv --numeric-ids --acls --xattrs --delete "$overlayChanges/" "$changesSync"
-chkEx || return $?
+#echo "Rsync changes from overlay to persistent drive"
+#rsync -arv --numeric-ids --acls --xattrs --delete "$overlayChanges/" "$changesSync"
+#chkEx || return $?
 
 if [ $onlyPrepare -eq 0 ]; then
   #На всякий случай проверям есть ли папка для изменений
@@ -56,6 +59,7 @@ if [ $onlyPrepare -eq 0 ]; then
   fi
   #Сделаем копию изменений линками
   cp -Ralp "$changesSync" "$dstChanges"
+  incErrCnt
 
   cd "$changesSync"
   find -print0 | while read -r -d $'\0' FILE; do
@@ -151,6 +155,6 @@ echo "Finish enum"
 echo ""
 #onlyPrepare=0
 else
-  echo "Skip copying, because "
+  echo "Skip copying, because onlyPrepare=0"
 fi
 

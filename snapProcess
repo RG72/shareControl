@@ -22,6 +22,7 @@ done
 #/root/dropCaches
 
 . $baseDir"lib/processAShare"
+. $baseDir"lib/cleanUpShare"
 
 if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
   echo "prepare and snap zero!"
@@ -47,36 +48,40 @@ echo ""
 if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
   stage="stop smbd"
   echo $stage
+  date
   systemctl stop smbd
 fi
 
 for share in $shares; do
+  date
   echo "----- Share $share -----"
-  #На всякий случай проверяем количество разделов overlay для данной шары
-  chkCntVol=`lvs | grep "overlay_"$share"_" | wc --lines`
-  if [ "$chkCntVol" -ne 1 ]; then
-    echo "Expect only 1 lv, but found a $chkCntVol"
-    #return 3
-  else
-    processAShare || return $?
-  fi
+  processAShare || return $?
   echo "----- finish share $share -----"
   echo ""
-
 done
 
 if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
   stage="Start smbd"
   echo $stage
   systemctl start smbd
+  date
   chkEx || return $?
 fi
+
+for share in $shares; do
+  date
+  echo "----- Cleanup $share -----"
+  cleanUpShare || return $?
+  echo "----- finish cleanup $share -----"
+  echo ""
+done
+
 }
 
 wrapper || exit $?
 level=5
 if [ $onlySnap -eq 0 ] && [ $onlyPrepare -eq 0 ]; then
-  level=3
+  level=4
 fi
 /root/telegram-bot-bash/sendNotify -l$level -t "Success snapshot onlyPrepare=$onlyPrepare onlySnap=$onlySnap"
 
